@@ -13,6 +13,7 @@ morgan.token('data', (request) => {
 const app = express()
 
 app.use(express.json())
+app.use(express.static('build')) // make express hsow static content
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :data'))
 app.use(cors())
 
