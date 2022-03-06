@@ -1,12 +1,11 @@
 require('dotenv').config()
 const express = require('express')
-const { notEqual } = require('assert')
 const cors = require('cors')
 const Person = require('./models/person')
 const morgan = require('morgan')
 
 morgan.token('data', (request) => {
-  if (request.method !== "POST") {
+  if (request.method !== 'POST') {
     return null
   }
   return JSON.stringify(request.body)
@@ -50,7 +49,7 @@ app.get('/api/persons/:id', (request, response, next) => {
 
 app.delete('/api/persons/:id', (request, response, next) => {
   Person.findByIdAndRemove(request.params.id)
-    .then(result => response.status(204).end())
+    .then(() => response.status(204).end())
     .catch(error => next(error))
 })
 
@@ -60,13 +59,12 @@ app.post('/api/persons', (request, response, next) => {
   Person.findOne({ name: body.name })
     .then(person => {
       if (person) {
-        response.status(400).send({ error: `${body.name} already exists`})
+        response.status(400).send({ error: `${body.name} already exists` })
       } else {
         const person = new Person({
           name: body.name,
           number: body.number
         })
-        
         person.save()
           .then(savedPerson => {
             return response.json(savedPerson)
@@ -84,8 +82,8 @@ app.put('/api/persons/:id', (request, response, next) => {
     number: body.number,
   }
   Person.findByIdAndUpdate(
-    request.params.id, 
-    person, 
+    request.params.id,
+    person,
     { new:true, runValidators: true }
   )
     .then(updatedPerson => {
@@ -105,7 +103,7 @@ const unknownEndpoint = (request, response) => {
 app.use(unknownEndpoint)
 
 const errorHandler = (error, request, response, next) => {
-  console.log(error.name);
+  console.log(error.name)
   console.error(error.message)
   if (error.name === 'CastError') {
     return response.status(400).send({ error: 'malformatted id' })
@@ -118,6 +116,7 @@ const errorHandler = (error, request, response, next) => {
 
 app.use(errorHandler)
 
+// eslint-disable-next-line no-undef
 const PORT = process.env.PORT
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
