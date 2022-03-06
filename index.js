@@ -54,28 +54,26 @@ app.delete('/api/persons/:id', (request, response, next) => {
     .catch(error => next(error))
 })
 
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
   const body = request.body
 
-  if (!body.name) {
-    return response.status(400).json({
-      "error": 'name missing'
+  Person.findOne({ name: body.name })
+    .then(person => {
+      if (person) {
+        response.status(400).send({ error: `${body.name} already exists`})
+      } else {
+        const person = new Person({
+          name: body.name,
+          number: body.number
+        })
+        
+        person.save()
+          .then(savedPerson => {
+            return response.json(savedPerson)
+          })
+          .catch(error => next(error))
+      }
     })
-  } else if (!body.number) {
-    return response.status(400).json({
-      "error": 'number missing'
-    })
-  } 
-
-  const person = new Person({
-    name: body.name,
-    number: body.number
-  })
-  
-  person.save().then(savedPerson => {
-    return response.json(savedPerson)
-  })
-
 })
 
 app.put('/api/persons/:id', (request, response, next) => {
@@ -85,7 +83,11 @@ app.put('/api/persons/:id', (request, response, next) => {
     name: body.name,
     number: body.number,
   }
-  Person.findByIdAndUpdate(request.params.id, person, { new:true })
+  Person.findByIdAndUpdate(
+    request.params.id, 
+    person, 
+    { new:true, runValidators: true }
+  )
     .then(updatedPerson => {
       if (updatedPerson) {
         response.json(updatedPerson)
@@ -103,10 +105,13 @@ const unknownEndpoint = (request, response) => {
 app.use(unknownEndpoint)
 
 const errorHandler = (error, request, response, next) => {
+  console.log(error.name);
   console.error(error.message)
   if (error.name === 'CastError') {
     return response.status(400).send({ error: 'malformatted id' })
-  } 
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).json({ error: error.message })
+  }
 
   next(error)
 }
